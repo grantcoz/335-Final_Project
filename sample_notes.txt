@@ -1,0 +1,11 @@
+TitanCampus Algorithmic Assistant Test Document
+
+This document is intended for testing the search engine module. It contains several repeated phrases and terms such as campus, algorithm, and study planner.
+
+The quick brown fox jumps over the lazy dog.
+Algorithms are fun to analyze and implement.
+
+Campus navigation helps showcase BFS, DFS, Dijkstra, and Prim's MST.
+The study planner uses greedy and dynamic programming scheduling.
+
+Search for patterns like campus, algorithm, planner, or test to verify the search engine.

@@ -1,0 +1,12 @@
+Test Document for Notes Search
+
+This file serves as a second sample input for the Notes Search Engine.
+It includes repeated words and simple sentences.
+
+Search patterns:
+- "search"
+- "Notes"
+- "document"
+- "sample"
+
+The file contains enough content to verify match indices and snippet previews.

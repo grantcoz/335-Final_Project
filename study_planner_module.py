@@ -1,3 +1,6 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+
 class Task:
     def __init__(self, name, time, value):
         # raises value errors for invalid time/value input
@@ -20,6 +23,205 @@ class Task:
         the printed schedule info
         even without the gui"""
         return f"Task(name = '{self.name}', time = {self.time}, value = {self.value})"
+
+
+class StudyPlannerFrame(ttk.Frame):
+    """Tkinter frame for the study planner module."""
+
+    def __init__(self, parent: tk.Widget):
+        super().__init__(parent, padding=10)
+        self._tasks = []
+        self._build_widgets()
+
+    def _build_widgets(self) -> None:
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(7, weight=1)
+
+        header = ttk.Label(
+            self,
+            text="Study Planner",
+            font=("Segoe UI", 16, "bold"),
+        )
+        header.grid(row=0, column=0, sticky="w", pady=(0, 10))
+
+        entry_frame = ttk.Frame(self)
+        entry_frame.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        entry_frame.columnconfigure(1, weight=1)
+        entry_frame.columnconfigure(3, weight=1)
+        entry_frame.columnconfigure(5, weight=1)
+
+        ttk.Label(entry_frame, text="Task name:").grid(row=0, column=0, sticky="w")
+        self._name_entry = ttk.Entry(entry_frame)
+        self._name_entry.grid(row=0, column=1, sticky="ew", padx=(4, 12))
+
+        ttk.Label(entry_frame, text="Time:").grid(row=0, column=2, sticky="w")
+        self._time_entry = ttk.Entry(entry_frame)
+        self._time_entry.grid(row=0, column=3, sticky="ew", padx=(4, 12))
+
+        ttk.Label(entry_frame, text="Value:").grid(row=0, column=4, sticky="w")
+        self._value_entry = ttk.Entry(entry_frame)
+        self._value_entry.grid(row=0, column=5, sticky="ew", padx=(4, 0))
+
+        ttk.Button(self, text="Add Task", command=self._on_add_task).grid(
+            row=2, column=0, sticky="w", pady=(0, 10)
+        )
+
+        list_frame = ttk.Frame(self)
+        list_frame.grid(row=3, column=0, sticky="ew", pady=(0, 10))
+        list_frame.columnconfigure(0, weight=1)
+
+        self._task_tree = ttk.Treeview(
+            list_frame,
+            columns=("name", "time", "value"),
+            show="headings",
+            height=6,
+        )
+        self._task_tree.heading("name", text="Task")
+        self._task_tree.heading("time", text="Time")
+        self._task_tree.heading("value", text="Value")
+        self._task_tree.column("name", width=240, anchor="w")
+        self._task_tree.column("time", width=80, anchor="center")
+        self._task_tree.column("value", width=80, anchor="center")
+        self._task_tree.grid(row=0, column=0, sticky="nsew")
+
+        scroll = ttk.Scrollbar(
+            list_frame,
+            orient="vertical",
+            command=self._task_tree.yview,
+        )
+        scroll.grid(row=0, column=1, sticky="ns")
+        self._task_tree.configure(yscrollcommand=scroll.set)
+
+        controls = ttk.Frame(self)
+        controls.grid(row=4, column=0, sticky="ew", pady=(0, 10))
+        controls.columnconfigure(1, weight=1)
+
+        ttk.Label(controls, text="Available time:").grid(row=0, column=0, sticky="w")
+        self._budget_entry = ttk.Entry(controls)
+        self._budget_entry.grid(row=0, column=1, sticky="w", padx=(4, 12))
+        self._budget_entry.insert(0, "10")
+
+        algo_frame = ttk.LabelFrame(self, text="Algorithm")
+        algo_frame.grid(row=5, column=0, sticky="ew", pady=(0, 10))
+        self._algo_choice = tk.StringVar(value="Greedy")
+        for col, label in enumerate(("Greedy", "DP")):
+            ttk.Radiobutton(
+                algo_frame,
+                text=label,
+                value=label,
+                variable=self._algo_choice,
+            ).grid(row=0, column=col, padx=10, pady=4, sticky="w")
+
+        button_frame = ttk.Frame(self)
+        button_frame.grid(row=6, column=0, sticky="w")
+        ttk.Button(button_frame, text="Run Scheduler", command=self._on_run).grid(
+            row=0, column=0, sticky="w"
+        )
+        ttk.Button(button_frame, text="Clear Tasks", command=self._clear_tasks).grid(
+            row=0, column=1, sticky="w", padx=(8, 0))
+
+        result_frame = ttk.Frame(self)
+        result_frame.grid(row=7, column=0, sticky="nsew")
+        result_frame.columnconfigure(0, weight=1)
+        result_frame.rowconfigure(0, weight=1)
+
+        self._results = tk.Text(
+            result_frame,
+            wrap="word",
+            height=12,
+            font=("Consolas", 10),
+            state="disabled",
+        )
+        self._results.grid(row=0, column=0, sticky="nsew")
+
+        scroll2 = ttk.Scrollbar(
+            result_frame,
+            orient="vertical",
+            command=self._results.yview,
+        )
+        scroll2.grid(row=0, column=1, sticky="ns")
+        self._results.configure(yscrollcommand=scroll2.set)
+
+        self._write_results(
+            "Add tasks, choose an algorithm, and click Run Scheduler."
+        )
+
+    def _on_add_task(self) -> None:
+        name = self._name_entry.get().strip()
+        time_text = self._time_entry.get().strip()
+        value_text = self._value_entry.get().strip()
+
+        if not name:
+            messagebox.showerror("Invalid task", "Task name cannot be empty.")
+            return
+
+        try:
+            time_val = int(time_text)
+            value_val = int(value_text)
+            task = Task(name, time_val, value_val)
+        except ValueError as exc:
+            messagebox.showerror("Invalid task", str(exc))
+            return
+
+        self._tasks.append(task)
+        self._task_tree.insert("", "end", values=(task.name, task.time, task.value))
+        self._name_entry.delete(0, tk.END)
+        self._time_entry.delete(0, tk.END)
+        self._value_entry.delete(0, tk.END)
+        self._write_results(f"Added task: {task}")
+
+    def _on_run(self) -> None:
+        if not self._tasks:
+            messagebox.showinfo("No tasks", "Please add at least one task.")
+            return
+
+        time_budget_text = self._budget_entry.get().strip()
+        try:
+            time_budget = int(time_budget_text)
+            if time_budget <= 0:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror(
+                "Invalid available time",
+                "Enter a positive integer for available time.",
+            )
+            return
+
+        algorithm = self._algo_choice.get()
+        if algorithm == "Greedy":
+            result = greedy_scheduler(self._tasks, time_budget)
+        else:
+            result = dp_optimal_scheduler(self._tasks, time_budget)
+
+        chosen = result["chosen_tasks"]
+        lines = [
+            f"Algorithm: {algorithm}",
+            f"Available time: {time_budget}",
+            f"Total chosen tasks: {len(chosen)}",
+            f"Total time used: {result['total_time']}",
+            f"Total value: {result['total_value']}",
+            "",
+            "Chosen tasks:",
+        ]
+        if chosen:
+            for task in chosen:
+                lines.append(f"  - {task.name} (time={task.time}, value={task.value})")
+        else:
+            lines.append("  No tasks could fit within the available time.")
+
+        self._write_results("\n".join(lines))
+
+    def _clear_tasks(self) -> None:
+        self._tasks.clear()
+        for item in self._task_tree.get_children():
+            self._task_tree.delete(item)
+        self._write_results("Task list cleared.")
+
+    def _write_results(self, text: str) -> None:
+        self._results.configure(state="normal")
+        self._results.delete("1.0", tk.END)
+        self._results.insert(tk.END, text)
+        self._results.configure(state="disabled")
 
 
 def greedy_scheduler(tasks, time_available):
